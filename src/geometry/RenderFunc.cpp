@@ -10,24 +10,24 @@
 
 namespace RenderFunc {
 
-template<int d,class T> void Write_Field(std::string file_name,const Field<T,d>& field)
+template<int d,class T> void Write_Field(const fs::path& file_name,const Field<T,d>& field)
 {
 	if constexpr(d==1||d==3)
-		File::Write_Binary_To_File(file_name,&field);
+		File::Write_Binary_To_File(file_name.string(), &field);
 	else {
 		////PBG: needs conversion when d==2,works for scalar field only
 		Field<T,3> field3;
 		Dim_Conversion<T,d,3>(field,field3);
-		File::Write_Binary_To_File(file_name,field3);}
+		File::Write_Binary_To_File(file_name.string(), field3); }
 }
 
 #define Inst_Helper(T)														\
-template void Write_Field<2,T>(std::string,const Field<T,2>&);			\
-template void Write_Field<3,T>(std::string,const Field<T,3>&);
+template void Write_Field<2,T>(const fs::path&,const Field<T,2>&);			\
+template void Write_Field<3,T>(const fs::path&,const Field<T,3>&);
 Inst_Helper(float);	Inst_Helper(double);Inst_Helper(int);Inst_Helper(ushort);
 #undef Inst_Helper
 
-template<int d> void Write_Face_Field_On_Cells(const std::string& file_name,const MacGrid<d>& mac_grid,const FaceField<real,d>& val)
+template<int d> void Write_Face_Field_On_Cells(const fs::path& file_name,const MacGrid<d>& mac_grid,const FaceField<real,d>& val)
 {
 	Field<Vector<real,d>,d> grid_v;
 	Field<real,d> grid_a;
@@ -44,10 +44,10 @@ template<int d> void Write_Face_Field_On_Cells(const std::string& file_name,cons
 	Write_Field<d,real>(file_name,grid_a);
 }
 
-template void Write_Face_Field_On_Cells<2>(const std::string& file_name,const MacGrid<2>& mac_grid,const FaceField<real,2>& val);
-template void Write_Face_Field_On_Cells<3>(const std::string& file_name,const MacGrid<3>& mac_grid,const FaceField<real,3>& val);
+template void Write_Face_Field_On_Cells<2>(const fs::path& file_name,const MacGrid<2>& mac_grid,const FaceField<real,2>& val);
+template void Write_Face_Field_On_Cells<3>(const fs::path& file_name,const MacGrid<3>& mac_grid,const FaceField<real,3>& val);
 
-template<int d> void Write_Face_Field_On_Faces(const std::string& file_name,const MacGrid<d>& mac_grid,const FaceField<real,d>& face_field)
+template<int d> void Write_Face_Field_On_Faces(const fs::path& file_name,const MacGrid<d>& mac_grid,const FaceField<real,d>& face_field)
 {Typedef_VectorDii(d);
 	int n=(int)mac_grid.Number_Of_Faces();
 	float* xf=new float[n*8];
@@ -81,10 +81,10 @@ template<int d> void Write_Face_Field_On_Faces(const std::string& file_name,cons
 	delete [] xf;
 }
 
-template void Write_Face_Field_On_Faces<2>(const std::string&,const MacGrid<2>&,const FaceField<real,2>&);
-template void Write_Face_Field_On_Faces<3>(const std::string&,const MacGrid<3>&,const FaceField<real,3>&);
+template void Write_Face_Field_On_Faces<2>(const fs::path&,const MacGrid<2>&,const FaceField<real,2>&);
+template void Write_Face_Field_On_Faces<3>(const fs::path&,const MacGrid<3>&,const FaceField<real,3>&);
 
-template<int d,class T> void Write_Points_Float(std::string file_name,const Array<Vector<T,d>>& X)
+template<int d,class T> void Write_Points_Float(const fs::path& file_name,const Array<Vector<T,d>>& X)
 {
 	int n=(int)X.size();
 	float* xf=new float[n*4];
@@ -104,12 +104,12 @@ template<int d,class T> void Write_Points_Float(std::string file_name,const Arra
 	delete[] xf;
 }
 
-template void Write_Points_Float<2,real>(std::string,const Array<Vector2>&);
-template void Write_Points_Float<3,real>(std::string,const Array<Vector3>&);
-template void Write_Points_Float<2,float>(std::string,const Array<Vector2f>&);
-template void Write_Points_Float<3,float>(std::string,const Array<Vector3f>&);
+template void Write_Points_Float<2,real>(const fs::path&,const Array<Vector2>&);
+template void Write_Points_Float<3,real>(const fs::path&,const Array<Vector3>&);
+template void Write_Points_Float<2,float>(const fs::path&,const Array<Vector2f>&);
+template void Write_Points_Float<3,float>(const fs::path&,const Array<Vector3f>&);
 
-template<int d,class T> void Write_Vectors_Float(std::string file_name,const Array<Vector<T,d> >& X,const Array<Vector<T,d> >& V,bool as_ends)
+template<int d,class T> void Write_Vectors_Float(const fs::path& file_name,const Array<Vector<T,d> >& X,const Array<Vector<T,d> >& V,bool as_ends)
 {
 	Info("Write Vectors to {}", file_name);
 
@@ -147,12 +147,12 @@ template<int d,class T> void Write_Vectors_Float(std::string file_name,const Arr
 	delete[] xf;
 }
 
-template void Write_Vectors_Float<2,double>(std::string,const Array<Vector2>&,const Array<Vector2>&,bool);
-template void Write_Vectors_Float<3,double>(std::string,const Array<Vector3>&,const Array<Vector3>&,bool);
-template void Write_Vectors_Float<2,float>(std::string,const Array<Vector2f>&,const Array<Vector2f>&,bool);
-template void Write_Vectors_Float<3,float>(std::string,const Array<Vector3f>&,const Array<Vector3f>&,bool);
+template void Write_Vectors_Float<2,double>(const fs::path&,const Array<Vector2>&,const Array<Vector2>&,bool);
+template void Write_Vectors_Float<3,double>(const fs::path&,const Array<Vector3>&,const Array<Vector3>&,bool);
+template void Write_Vectors_Float<2,float>(const fs::path&,const Array<Vector2f>&,const Array<Vector2f>&,bool);
+template void Write_Vectors_Float<3,float>(const fs::path&,const Array<Vector3f>&,const Array<Vector3f>&,bool);
 
-template<int d> void Write_Scalars_As_Points_Float(std::string file_name,const GeometryParticles<d>& points,const Array<real>& arr,const real scale)
+template<int d> void Write_Scalars_As_Points_Float(const fs::path& file_name,const GeometryParticles<d>& points,const Array<real>& arr,const real scale)
 {
 	int pn=points.Size();
 	if(arr.size()!=pn)AuxFunc::Crash_With_Info("RenderFunc::Write_Scalars_As_Points error: size not match");
@@ -163,10 +163,10 @@ template<int d> void Write_Scalars_As_Points_Float(std::string file_name,const G
 	RenderFunc::Write_Points_Float<d,real>(file_name,to_write);
 }
 
-template void Write_Scalars_As_Points_Float<2>(std::string,const GeometryParticles<2>&,const Array<real>&,const real);
-template void Write_Scalars_As_Points_Float<3>(std::string,const GeometryParticles<3>&,const Array<real>&,const real);
+template void Write_Scalars_As_Points_Float<2>(const fs::path&,const GeometryParticles<2>&,const Array<real>&,const real);
+template void Write_Scalars_As_Points_Float<3>(const fs::path&,const GeometryParticles<3>&,const Array<real>&,const real);
 
-template<int d> void Write_Customized_Segments_Float(std::string file_name,const Array<Vector<real,d>>& xs,const Array<Vector<real,d>>& normals,const Array<real>& len_arr,const real scale)
+template<int d> void Write_Customized_Segments_Float(const fs::path& file_name,const Array<Vector<real,d>>& xs,const Array<Vector<real,d>>& normals,const Array<real>& len_arr,const real scale)
 {
 	Array<Vector<real,d> > to_write;
 	int pn=(int)len_arr.size();
@@ -177,23 +177,23 @@ template<int d> void Write_Customized_Segments_Float(std::string file_name,const
 	Write_Vectors_Float<d,real>(file_name,xs,to_write);//in Particles.h
 }
 
-template void Write_Customized_Segments_Float<2>(std::string,const Array<Vector2>&,const Array<Vector2>&,const Array<real>&,const real);
-template void Write_Customized_Segments_Float<3>(std::string,const Array<Vector3>&,const Array<Vector3>&,const Array<real>&,const real);
+template void Write_Customized_Segments_Float<2>(const fs::path&,const Array<Vector2>&,const Array<Vector2>&,const Array<real>&,const real);
+template void Write_Customized_Segments_Float<3>(const fs::path&,const Array<Vector3>&,const Array<Vector3>&,const Array<real>&,const real);
 
-template<int d> void Write_Dirichlet_Boundary_Conditions(std::string file_name,const MacGrid<d>& mac_grid,const BoundaryConditionMacGrid<d>& bc)
+template<int d> void Write_Dirichlet_Boundary_Conditions(const fs::path& file_name,const MacGrid<d>& mac_grid,const BoundaryConditionMacGrid<d>& bc)
 {
 	Particles<d> particles;
 	for(auto p:bc.psi_D_values){
 		Vector<int,d> cell=mac_grid.grid.Cell_Coord(p.first);
 		Vector<real,d> pos=mac_grid.grid.Center(cell);
 		int i=particles.Add_Element();particles.X(i)=pos;}
-	particles.Write_To_File_3d(file_name);
+	particles.Write_To_File_3d(file_name.string());
 }
 
-template void Write_Dirichlet_Boundary_Conditions<2>(std::string,const MacGrid<2>&,const BoundaryConditionMacGrid<2>&);
-template void Write_Dirichlet_Boundary_Conditions<3>(std::string,const MacGrid<3>&,const BoundaryConditionMacGrid<3>&);
+template void Write_Dirichlet_Boundary_Conditions<2>(const fs::path&,const MacGrid<2>&,const BoundaryConditionMacGrid<2>&);
+template void Write_Dirichlet_Boundary_Conditions<3>(const fs::path&,const MacGrid<3>&,const BoundaryConditionMacGrid<3>&);
 
-template<int d> void Write_Neumann_Boundary_Conditions(std::string file_name,const MacGrid<d>& mac_grid,const BoundaryConditionMacGrid<d>& bc)
+template<int d> void Write_Neumann_Boundary_Conditions(const fs::path& file_name,const MacGrid<d>& mac_grid,const BoundaryConditionMacGrid<d>& bc)
 {
 	Particles<d> particles;
 	for(auto p:bc.psi_N_values){
@@ -202,21 +202,21 @@ template<int d> void Write_Neumann_Boundary_Conditions(std::string file_name,con
 		Vector<real,d> pos=mac_grid.Face_Center(axis,face);
 		int i=particles.Add_Element();particles.X(i)=pos;}
 	//File::Write_Binary_To_File(file_name,particles);
-	particles.Write_To_File_3d(file_name);
+	particles.Write_To_File_3d(file_name.string());
 }
 
-template void Write_Neumann_Boundary_Conditions<2>(std::string,const MacGrid<2>&,const BoundaryConditionMacGrid<2>&);
-template void Write_Neumann_Boundary_Conditions<3>(std::string,const MacGrid<3>&,const BoundaryConditionMacGrid<3>&);
+template void Write_Neumann_Boundary_Conditions<2>(const fs::path&,const MacGrid<2>&,const BoundaryConditionMacGrid<2>&);
+template void Write_Neumann_Boundary_Conditions<3>(const fs::path&,const MacGrid<3>&,const BoundaryConditionMacGrid<3>&);
 
-template<int d> void Write_LevelSet_Mesh(std::string file_name,LevelSet<d>& levelset)
+template<int d> void Write_LevelSet_Mesh(const fs::path& file_name,LevelSet<d>& levelset)
 {
 	MarchingCubes<d> marching_cubes(levelset);
 	marching_cubes.Marching();
-	(*marching_cubes.mesh).Write_To_File_3d(file_name);
+	(*marching_cubes.mesh).Write_To_File_3d(file_name.string());
 }
 
-template void Write_LevelSet_Mesh<2>(std::string,LevelSet<2>&);
-template void Write_LevelSet_Mesh<3>(std::string,LevelSet<3>&);
+template void Write_LevelSet_Mesh<2>(const fs::path&,LevelSet<2>&);
+template void Write_LevelSet_Mesh<3>(const fs::path&,LevelSet<3>&);
 }
 
 

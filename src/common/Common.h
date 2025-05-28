@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////////
 // Common header
 // Copyright (c) (2018-), Bo Zhu, Mengdi Wang
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
@@ -286,6 +286,13 @@ struct fmt::formatter<Eigen::Matrix<double, 2, 1>> {
     }
 };
 
+template <>
+struct fmt::formatter<std::filesystem::path> : fmt::formatter<std::string> {
+    template <typename FormatContext>
+    auto format(const std::filesystem::path& p, FormatContext& ctx) {
+        return fmt::formatter<std::string>::format(p.string(), ctx);
+    }
+};
 
 //if a is not nan or inf. Supports floating point types and Vector1~Vector3.
 template<class T> bool Is_Valid_Number(const T& a);

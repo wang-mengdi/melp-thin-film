@@ -196,10 +196,18 @@ void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 #pragma omp parallel for
 	for (int i = 0; i < l_normals.size(); i++) l_normals[i] = fluid.l_particles.Normal(i);
 
-	RenderFunc::Write_Vectors_Float<d, real>((frame_path / "e_tracker_circles").string(), fluid.e_particles.XRef(), e_normals, true);
-	RenderFunc::Write_Vectors_Float<d, real>((frame_path / "l_tracker_circles").string(), fluid.l_particles.XRef(), l_normals, true);
+	Info("here 1");
+
+	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "e_tracker_circles", fluid.e_particles.XRef(), e_normals, true);
+	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "l_tracker_circles", fluid.l_particles.XRef(), l_normals, true);
+
+	Info("here 1.5");
+
 	BinaryDataIO::Write_Array((frame_path / "l_h_bin").string(), fluid.l_particles.HRef());
 	BinaryDataIO::Write_Array((frame_path / "l_sa_bin").string(), fluid.l_particles.SARef());
+
+	Info("here 2");
+
 	if (!fluid.e_only) {
 		BinaryDataIO::Write_Array((frame_path / "e_h_bin").string(), fluid.e_particles.HRef());
 	}
