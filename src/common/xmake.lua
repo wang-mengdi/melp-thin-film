@@ -1,7 +1,7 @@
 set_languages("c++17")
 
 add_requires("fmt =8.1.1")
-add_requires("nlohmann_json >=3.10.5")
+add_requires("nlohmann_json >=3.12.0")
 add_requires("eigen >=3.4.0")
 
 
