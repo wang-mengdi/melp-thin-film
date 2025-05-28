@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.17)
+set(proj_name melp_demo)
+project(${proj_name})
+include(${PROJECT_SOURCE_DIR}/../../../simplex/script/functions.cmake)
+init_project(${PROJECT_SOURCE_DIR}/../../../simplex)
+use_ext_libs(LINK "openmp;physbam;perlin_noise")
+use_src_libs(SELF "physics;")
+setup_exe_target()
