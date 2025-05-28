@@ -111,6 +111,8 @@ template void Write_Points_Float<3,float>(std::string,const Array<Vector3f>&);
 
 template<int d,class T> void Write_Vectors_Float(std::string file_name,const Array<Vector<T,d> >& X,const Array<Vector<T,d> >& V,bool as_ends)
 {
+	Info("Write Vectors to {}", file_name);
+
 	int n=(int)X.size();
 	float* xf=new float[n*8];
 	memset((void*)xf,0,sizeof(float)*n*8);

@@ -453,10 +453,10 @@ public:
 
 	void Update_WM(real radius);
 
-	template<class T> T XSPH_Smoothing(const real alpha, Array<T>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter = nullptr)const; //modify the original f_arr
+	template<class T> void XSPH_Smoothing(const real alpha, Array<T>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter = nullptr)const; //modify the original f_arr
 	template<class T> T XSPH_Smoothed_Value(const VectorD& pos, const MatrixD& frame, T& value, Array<T>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type)const; //return the velocity difference
 	template<class T> T Boundary_Adhesion(Array<T>& f_arr) const; //boundary_adhesion
-	VectorD XSPH_Smoothing_Tang_Norm(const real alpha_tang, const real alpha_norm, Array<VectorD>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter = nullptr)const; //modify the original f_arr
+	void XSPH_Smoothing_Tang_Norm(const real alpha_tang, const real alpha_norm, Array<VectorD>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter = nullptr)const; //modify the original f_arr
 	void Decay_Velocity(Array<VectorD>& vels, const real dt, const real tang_strength, const real norm_strength);
 
 	bool Eulerian_Near_Boundary(const int idx, const real dist) const
@@ -636,7 +636,7 @@ inline void ParticleALEFilm<d>::AffineDistribute_L2E(Array<VectorD>& e_arr, cons
 
 template<int d>
 template<class T>
-inline T ParticleALEFilm<d>::XSPH_Smoothing(const real alpha, Array<T>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter)const
+inline void ParticleALEFilm<d>::XSPH_Smoothing(const real alpha, Array<T>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter)const
 {
 	Array<T> smoothed_f; smoothed_f.resize(e_particles.Size());
 	AuxFunc::Fill(smoothed_f, Zero<T>());
@@ -674,7 +674,7 @@ inline T ParticleALEFilm<d>::XSPH_Smoothing(const real alpha, Array<T>& f_arr, c
 }
 
 template<int d>
-Vector<real, d> ParticleALEFilm<d>::XSPH_Smoothing_Tang_Norm(const real alpha_tang, const real alpha_norm, Array<Vector<real,d>>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter)const
+void ParticleALEFilm<d>::XSPH_Smoothing_Tang_Norm(const real alpha_tang, const real alpha_norm, Array<Vector<real,d>>& f_arr, const KernelSPH& kernel, const real radius, KernelType kernel_type, std::function<bool(const int)> filter)const
 {
 	Array<VectorD> smoothed_f; smoothed_f.resize(e_particles.Size());
 	AuxFunc::Fill(smoothed_f, VectorD::Zero());

@@ -175,11 +175,15 @@ void ParticleALEFilmDriver<d>::Write_Particle_Basics(const NAParticles<d>& parti
 template<int d>
 void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 {
+	namespace fs = std::filesystem;
+
 	static double begin_time = omp_get_wtime();
 	static double last_time = begin_time;
 	static double now_time = last_time;
 
 	Base::Write_Output_Files(frame);
+
+	fs::path frame_path = fs::path(output_dir) / std::to_string(frame);
 
 	//write snapshot first things first
 	if (frame % snapshot_stride == (int)0) Save_Snapshot(frame);
@@ -192,12 +196,12 @@ void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 #pragma omp parallel for
 	for (int i = 0; i < l_normals.size(); i++) l_normals[i] = fluid.l_particles.Normal(i);
 
-	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_tracker_circles", fluid.e_particles.XRef(), e_normals, true);
-	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/l_tracker_circles", fluid.l_particles.XRef(), l_normals, true);
-	BinaryDataIO::Write_Array(frame_dir + "/l_h_bin", fluid.l_particles.HRef());
-	BinaryDataIO::Write_Array(frame_dir + "/l_sa_bin", fluid.l_particles.SARef());
+	RenderFunc::Write_Vectors_Float<d, real>((frame_path / "e_tracker_circles").string(), fluid.e_particles.XRef(), e_normals, true);
+	RenderFunc::Write_Vectors_Float<d, real>((frame_path / "l_tracker_circles").string(), fluid.l_particles.XRef(), l_normals, true);
+	BinaryDataIO::Write_Array((frame_path / "l_h_bin").string(), fluid.l_particles.HRef());
+	BinaryDataIO::Write_Array((frame_path / "l_sa_bin").string(), fluid.l_particles.SARef());
 	if (!fluid.e_only) {
-		BinaryDataIO::Write_Array(frame_dir + "/e_h_bin", fluid.e_particles.HRef());
+		BinaryDataIO::Write_Array((frame_path / "e_h_bin").string(), fluid.e_particles.HRef());
 	}
 	else {
 		Array<real> e_h; e_h.resize(fluid.e_particles.Size());

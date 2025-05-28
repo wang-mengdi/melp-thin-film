@@ -79,6 +79,7 @@ public:
 		}
 
 		fs::path frame_path = output_path / std::to_string(frame);
+		frame_dir = frame_path.string();
 		if(!fs::exists(frame_path)){
 			std::cout << "#     Create frame directory: " << frame_path << std::endl;
 			fs::create_directories(frame_path);
@@ -87,11 +88,15 @@ public:
 		//frame_dir=output_dir+"/"+std::to_string(frame);
 		//if(!File::Directory_Exists(frame_dir.c_str()))File::Create_Directory(frame_dir);
 		
-		{std::string file_name=output_dir+"/0/last_frame.txt";
-		File::Write_Text_To_File(file_name,std::to_string(frame));}
+		{
+			fs::path file_name = output_path / "0" / "last_frame.txt";
+			File::Write_Text_To_File(file_name.string(), std::to_string(frame));
+		}
 
-		{std::string file_name=frame_dir+"/time";
-		File::Write_Binary_To_File<real>(file_name,time);}
+		{
+			fs::path file_name = frame_path / "time";
+			File::Write_Binary_To_File<real>(file_name.string(), time);
+		}
 
 		std::cout << "#     Write Frame " << frame << " to: " << frame_dir << std::endl;
 	}
