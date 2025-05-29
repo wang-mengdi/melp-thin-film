@@ -186,7 +186,7 @@ void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 
 	Base::Write_Output_Files(frame);
 
-	VTKIOFunc::OutputLagrangianParticlesAsVTU<d>(fluid.l_particles, fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtu", frame));
+	VTKIOFunc::OutputLagrangianParticlesAsVTPWithDisks<d>(fluid.l_particles, fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtp", frame));
 	VTKIOFunc::OutputEulerianParticlesAsVTU<d>(fluid.e_particles, fs::path(output_dir) / fmt::format("e_particles_{:04d}.vtu", frame));
 
 
