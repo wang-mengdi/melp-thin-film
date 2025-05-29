@@ -11,6 +11,8 @@
 #include <vtkDiskSource.h>
 #include <vtkGlyph3D.h>
 #include <vtkXMLPolyDataWriter.h>
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
 
 namespace fs = std::filesystem;
 
@@ -60,6 +62,12 @@ namespace VTKIOFunc {
 		disk->SetOuterRadius(1.0);     // will be scaled by Scale array
 		disk->SetRadialResolution(1);  // low res for performance
 		disk->SetCircumferentialResolution(20); // higher value for better visuals
+		vtkNew<vtkTransform> transform;
+		transform->RotateY(90);
+		vtkNew<vtkTransformPolyDataFilter> transformFilter;
+		transformFilter->SetInputConnection(disk->GetOutputPort());
+		transformFilter->SetTransform(transform);
+		transformFilter->Update();
 
 		// Set up glyphs
 		vtkNew<vtkPolyData> glyph_input;
@@ -81,7 +89,8 @@ namespace VTKIOFunc {
 		glyph_input->GetPointData()->AddArray(height);
 
 		vtkNew<vtkGlyph3D> glyphs;
-		glyphs->SetSourceConnection(disk->GetOutputPort());
+		//glyphs->SetSourceConnection(disk->GetOutputPort());
+		glyphs->SetSourceConnection(transformFilter->GetOutputPort());
 		glyphs->SetInputData(glyph_input);
 		glyphs->SetVectorModeToUseVector();       // <- Use "Normals" array
 		glyphs->SetScaleModeToScaleByScalar();
