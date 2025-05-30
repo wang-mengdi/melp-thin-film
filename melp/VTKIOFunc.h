@@ -19,17 +19,18 @@ namespace fs = std::filesystem;
 namespace VTKIOFunc {
 
 	template<int d>
-	void OutputLagrangianParticlesAsVTPWithDisks(const LagrangeParticles<d>& particles, const fs::path& path) {
+	void OutputCircleDisks(const Array<Vector<real, d>>& point_array, const Array<Vector<real, d>>& normal_array, const Array<real>& area_array, const Array<real>& height_array, const fs::path& path) {
 		Assert(d == 3, "OutputLagrangianParticlesAsVTUWithDisks is only implemented for 3D particles.");
 		Info("Outputting Lagrangian particles as disk glyphs to VTU file: {}", path.string());
 
-		const int N = particles.Size();
+		const int N = point_array.size();
+		Assert(N == normal_array.size() && N == area_array.size(), "Points, normals, and areas must have the same size.");
 
 		// Points
 		vtkNew<vtkPoints> points;
 		points->SetNumberOfPoints(N);
 		for (int i = 0; i < N; ++i) {
-			const auto& x = particles.X(i);
+			const auto& x = point_array[i];
 			points->SetPoint(i, x[0], x[1], x[2]);
 		}
 
@@ -39,20 +40,17 @@ namespace VTKIOFunc {
 		normals->SetNumberOfTuples(N);
 		normals->SetName("Normals");
 		for (int i = 0; i < N; ++i) {
-			const auto& n = particles.Normal(i);
+			const auto& n = normal_array[i];
 			normals->SetTuple3(i, n[0], n[1], n[2]);
 		}
-
-
-
 
 		// Scaling (radius based on area A, disk area = πr² => r = sqrt(A/π))
 		vtkNew<vtkFloatArray> scale;
 		scale->SetNumberOfComponents(1);
 		scale->SetNumberOfTuples(N);
-		scale->SetName("SA");
+		scale->SetName("radius");
 		for (int i = 0; i < N; ++i) {
-			float r = std::sqrt(particles.SA(i) / pi);
+			float r = std::sqrt(area_array[i] / pi);
 			scale->SetValue(i, r);
 		}
 
@@ -63,7 +61,7 @@ namespace VTKIOFunc {
 		disk->SetRadialResolution(1);  // low res for performance
 		disk->SetCircumferentialResolution(20); // higher value for better visuals
 		vtkNew<vtkTransform> transform;
-		transform->RotateY(-90);
+		transform->RotateY(90);
 		vtkNew<vtkTransformPolyDataFilter> transformFilter;
 		transformFilter->SetInputConnection(disk->GetOutputPort());
 		transformFilter->SetTransform(transform);
@@ -82,9 +80,9 @@ namespace VTKIOFunc {
 		vtkNew<vtkFloatArray> height;
 		height->SetNumberOfComponents(1);
 		height->SetNumberOfTuples(N);
-		height->SetName("Height");
+		height->SetName("height");
 		for (int i = 0; i < N; ++i) {
-			height->SetValue(i, particles.H(i));
+			height->SetValue(i, height_array[i]);
 		}
 		glyph_input->GetPointData()->AddArray(height);
 
@@ -97,7 +95,7 @@ namespace VTKIOFunc {
 		glyphs->SetColorModeToColorByScalar();
 		glyphs->SetScaleFactor(1.0);
 		glyphs->OrientOn();
-		glyphs->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "SA");
+		glyphs->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "radius");
 		glyphs->Update();
 
 		// Write to .vtu
@@ -107,7 +105,6 @@ namespace VTKIOFunc {
 		writer->SetDataModeToBinary();
 		writer->Write();
 	}
-
 
 	template<int d>
 	void OutputEulerianParticlesAsVTU(const EulerParticles<d>& particles, const fs::path& path) {

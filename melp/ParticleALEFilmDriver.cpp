@@ -185,8 +185,16 @@ void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 	static double now_time = last_time;
 
 	Base::Write_Output_Files(frame);
-
-	VTKIOFunc::OutputLagrangianParticlesAsVTPWithDisks<d>(fluid.l_particles, fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtp", frame));
+	{
+		//write Lagrangian particles
+		auto& L = fluid.l_particles;
+		Array<VectorD> l_normals; l_normals.resize(L.Size());
+		for (int i = 0; i < l_normals.size(); i++) {
+			l_normals[i] = L.Normal(i);
+		}
+		VTKIOFunc::OutputCircleDisks<d>(L.XRef(), l_normals, L.SARef(), L.HRef(), fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtp", frame));
+	}
+	
 	VTKIOFunc::OutputEulerianParticlesAsVTU<d>(fluid.e_particles, fs::path(output_dir) / fmt::format("e_particles_{:04d}.vtu", frame));
 
 
