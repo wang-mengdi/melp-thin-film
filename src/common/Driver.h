@@ -78,12 +78,12 @@ public:
 			fs::create_directories(output_path);
 		}
 
-		fs::path frame_path = output_path / std::to_string(frame);
-		frame_dir = frame_path.string();
-		if(!fs::exists(frame_path)){
-			std::cout << "#     Create frame directory: " << frame_path << std::endl;
-			fs::create_directories(frame_path);
-		}
+		//fs::path frame_path = output_path / std::to_string(frame);
+		//frame_dir = frame_path.string();
+		//if(!fs::exists(frame_path)){
+		//	std::cout << "#     Create frame directory: " << frame_path << std::endl;
+		//	fs::create_directories(frame_path);
+		//}
 
 		//frame_dir=output_dir+"/"+std::to_string(frame);
 		//if(!File::Directory_Exists(frame_dir.c_str()))File::Create_Directory(frame_dir);
@@ -93,10 +93,10 @@ public:
 			File::Write_Text_To_File(file_name.string(), std::to_string(frame));
 		}
 
-		{
-			fs::path file_name = frame_path / "time";
-			File::Write_Binary_To_File<real>(file_name.string(), time);
-		}
+		//{
+		//	fs::path file_name = frame_path / "time";
+		//	File::Write_Binary_To_File<real>(file_name.string(), time);
+		//}
 
 		std::cout << "#     Write Frame " << frame << " to: " << frame_dir << std::endl;
 	}

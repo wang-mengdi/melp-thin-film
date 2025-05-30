@@ -192,76 +192,123 @@ void ParticleALEFilmDriver<d>::Write_Output_Files(const int frame)
 		for (int i = 0; i < l_normals.size(); i++) {
 			l_normals[i] = L.Normal(i);
 		}
-		VTKIOFunc::OutputCircleDisks<d>(L.XRef(), l_normals, L.SARef(), L.HRef(), fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtp", frame));
+		
+
+		if constexpr (d == 3) {
+			VTKIOFunc::OutputCircleDisksAsVTP(L.XRef(), l_normals, L.SARef(), L.HRef(), fs::path(output_dir) / fmt::format("l_circles_{:04d}.vtp", frame));
+			VTKIOFunc::OutputPointCloudDataAsVTP(
+				L.XRef(),
+				std::vector<std::pair<std::vector<real>, std::string>>{
+					{ L.HRef(), "H" },
+					{ L.SARef(), "SA" }
+			},
+				std::vector<std::pair<std::vector<Vector3>, std::string>>{
+					{ L.VRef(), "V" }
+			},
+				fs::path(output_dir) / fmt::format("l_particles_{:04d}.vtp", frame)
+			);
+		}
+		else {
+			Error("VTKIOFunc::OutputCircleDisksAsVTP is only implemented for 3D particles.");
+		}
+
+
+	}
+
+	{
+		//write Eulerian particles
+		auto& E = fluid.e_particles;
+		Array<VectorD> e_normals; e_normals.resize(E.Size());
+		for (int i = 0; i < e_normals.size(); i++) {
+			e_normals[i] = E.Normal(i);
+		}
+		if constexpr (d == 3) {
+			VTKIOFunc::OutputCircleDisksAsVTP(E.XRef(), e_normals, E.SARef(), E.HRef(), fs::path(output_dir) / fmt::format("e_circles_{:04d}.vtp", frame));
+			VTKIOFunc::OutputPointCloudDataAsVTP(
+				E.XRef(),
+				std::vector<std::pair<std::vector<real>, std::string>>{
+					{ E.HRef(), "H" },
+					{ E.SARef(), "SA" },
+					{ E.NDenRef(), "NDEN" }
+			},
+				std::vector<std::pair<std::vector<Vector3>, std::string>>{
+					{ E.VRef(), "V" },
+					{ E.BH_LVRef(), "BH_LV" },
+					{ E.FRef(), "F" }
+			},
+				fs::path(output_dir) / fmt::format("e_particles_{:04d}.vtp", frame)
+			);
+		}
+		else {
+			Error("VTKIOFunc::OutputCircleDisksAsVTP is only implemented for 3D particles.");
+		}
 	}
 	
-	VTKIOFunc::OutputEulerianParticlesAsVTU<d>(fluid.e_particles, fs::path(output_dir) / fmt::format("e_particles_{:04d}.vtu", frame));
-
-
-	fs::path frame_path = fs::path(output_dir) / std::to_string(frame);
-
 	//write snapshot first things first
 	if (frame % snapshot_stride == (int)0) Save_Snapshot(frame);
 
-	Array<VectorD> e_normals; e_normals.resize(fluid.e_particles.Size());
-#pragma omp parallel for
-	for (int i = 0; i < e_normals.size(); i++) e_normals[i] = fluid.e_particles.Normal(i);
+	////DEPRECATED, opengl_viewer only
 
-	Array<VectorD> l_normals; l_normals.resize(fluid.l_particles.Size());
-#pragma omp parallel for
-	for (int i = 0; i < l_normals.size(); i++) l_normals[i] = fluid.l_particles.Normal(i);
-
-
-	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "e_tracker_circles", fluid.e_particles.XRef(), e_normals, true);
-	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "l_tracker_circles", fluid.l_particles.XRef(), l_normals, true);
-
-	BinaryDataIO::Write_Array((frame_path / "l_h_bin").string(), fluid.l_particles.HRef());
-	BinaryDataIO::Write_Array((frame_path / "l_sa_bin").string(), fluid.l_particles.SARef());
-
-	if (!fluid.e_only) {
-		BinaryDataIO::Write_Array((frame_path / "e_h_bin").string(), fluid.e_particles.HRef());
-	}
-	else {
-		Array<real> e_h; e_h.resize(fluid.e_particles.Size());
-		real avg_nden = AuxFunc::Mean<real>(fluid.e_particles.NDenRef());
-#pragma omp parallel for
-		for (int i = 0; i < e_h.size(); i++) e_h[i] = 3.e-7 * fluid.e_particles.NDen(i)/avg_nden;
-		BinaryDataIO::Write_Array(frame_dir + "/e_h_bin", e_h);
-	}
-	//BinaryDataIO::Write_Array(frame_dir + "/e_h_bin", fluid.temp_scalar);
-	BinaryDataIO::Write_Array(frame_dir + "/e_sa_bin", fluid.e_particles.SARef());
-
-	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/v_tracker_points", fluid_3d.particles.XRef());
-	// That should be all that's needed for final rendering 
-	if (iomode == 1) return;
-
-	//tracker points
-	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/e_tracker_points", fluid.e_particles.XRef());
-	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/l_tracker_points", fluid.l_particles.XRef());
-
-	//height and nden
-	real h_scale = 0.3 * 1. / 5.e-7 * fluid.simulation_scale;
-	real nden_scale = 1. / fluid.e_particles.Size() * fluid.simulation_scale;
-	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_height", fluid.e_particles.XRef(), e_normals, fluid.e_particles.GammaRef(), h_scale);
-	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_height", fluid.e_particles.XRef(), e_normals, fluid.e_particles.GammaRef(), 3. * h_scale);
-	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_nden", fluid.e_particles.XRef(), e_normals, fluid.e_particles.NDenRef(), nden_scale);
-	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_nden", fluid.e_particles.XRef(), e_normals, fluid.e_particles.KSRef(), 1.E-3 * h_scale);
-	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_pressure", fluid.e_particles.XRef(), e_normals, fluid.temp_scalar, 1.e1);
-	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_pressure", fluid.e_particles.XRef(), e_normals, fluid.e_particles.PRef(), 1.E5);
-	
-	//velocities
-	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.BH_LVRef());
-	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.VRef());
-	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.temp_vector);
-	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.e_particles.VRef());
-	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.e_particles.FRef());
-	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/l_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.LV_TRef());
-
-	//segment mesh
-	PointSetFunc::Write_Local_Frames_To_File(frame_dir + "/e_segment_mesh", fluid.e_particles, 0.2 * fluid.simulation_scale);
-
-	////boundary and 3d particles
-	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/boundary_points", fluid.boundary.XRef());
+//	fs::path frame_path = fs::path(output_dir) / std::to_string(frame);
+//	Array<VectorD> e_normals; e_normals.resize(fluid.e_particles.Size());
+//#pragma omp parallel for
+//	for (int i = 0; i < e_normals.size(); i++) e_normals[i] = fluid.e_particles.Normal(i);
+//
+//	Array<VectorD> l_normals; l_normals.resize(fluid.l_particles.Size());
+//#pragma omp parallel for
+//	for (int i = 0; i < l_normals.size(); i++) l_normals[i] = fluid.l_particles.Normal(i);
+//
+//
+//	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "e_tracker_circles", fluid.e_particles.XRef(), e_normals, true);
+//	RenderFunc::Write_Vectors_Float<d, real>(frame_path / "l_tracker_circles", fluid.l_particles.XRef(), l_normals, true);
+//
+//	BinaryDataIO::Write_Array((frame_path / "l_h_bin").string(), fluid.l_particles.HRef());
+//	BinaryDataIO::Write_Array((frame_path / "l_sa_bin").string(), fluid.l_particles.SARef());
+//
+//	if (!fluid.e_only) {
+//		BinaryDataIO::Write_Array((frame_path / "e_h_bin").string(), fluid.e_particles.HRef());
+//	}
+//	else {
+//		Array<real> e_h; e_h.resize(fluid.e_particles.Size());
+//		real avg_nden = AuxFunc::Mean<real>(fluid.e_particles.NDenRef());
+//#pragma omp parallel for
+//		for (int i = 0; i < e_h.size(); i++) e_h[i] = 3.e-7 * fluid.e_particles.NDen(i)/avg_nden;
+//		BinaryDataIO::Write_Array(frame_dir + "/e_h_bin", e_h);
+//	}
+//	//BinaryDataIO::Write_Array(frame_dir + "/e_h_bin", fluid.temp_scalar);
+//	BinaryDataIO::Write_Array(frame_dir + "/e_sa_bin", fluid.e_particles.SARef());
+//
+//	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/v_tracker_points", fluid_3d.particles.XRef());
+//	// That should be all that's needed for final rendering 
+//	if (iomode == 1) return;
+//
+//	//tracker points
+//	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/e_tracker_points", fluid.e_particles.XRef());
+//	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/l_tracker_points", fluid.l_particles.XRef());
+//
+//	//height and nden
+//	real h_scale = 0.3 * 1. / 5.e-7 * fluid.simulation_scale;
+//	real nden_scale = 1. / fluid.e_particles.Size() * fluid.simulation_scale;
+//	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_height", fluid.e_particles.XRef(), e_normals, fluid.e_particles.GammaRef(), h_scale);
+//	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_height", fluid.e_particles.XRef(), e_normals, fluid.e_particles.GammaRef(), 3. * h_scale);
+//	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_nden", fluid.e_particles.XRef(), e_normals, fluid.e_particles.NDenRef(), nden_scale);
+//	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_nden", fluid.e_particles.XRef(), e_normals, fluid.e_particles.KSRef(), 1.E-3 * h_scale);
+//	RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_pressure", fluid.e_particles.XRef(), e_normals, fluid.temp_scalar, 1.e1);
+//	//RenderFunc::Write_Customized_Segments_Float<d>(frame_dir + "/e_point_pressure", fluid.e_particles.XRef(), e_normals, fluid.e_particles.PRef(), 1.E5);
+//	
+//	//velocities
+//	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.BH_LVRef());
+//	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.VRef());
+//	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.temp_vector);
+//	//RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.e_particles.VRef());
+//	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/e_point_force", fluid.e_particles.XRef(), fluid.e_particles.FRef());
+//	RenderFunc::Write_Vectors_Float<d, real>(frame_dir + "/l_point_velocity", fluid.e_particles.XRef(), fluid.e_particles.LV_TRef());
+//
+//	//segment mesh
+//	PointSetFunc::Write_Local_Frames_To_File(frame_dir + "/e_segment_mesh", fluid.e_particles, 0.2 * fluid.simulation_scale);
+//
+//	////boundary and 3d particles
+//	RenderFunc::Write_Points_Float<d, real>(frame_dir + "/boundary_points", fluid.boundary.XRef());
 }
 
 template<int d>

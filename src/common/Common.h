@@ -163,6 +163,13 @@ void Assert(const bool flg, const char* fmt="", const Args &...args) {
 }
 
 template<typename ...Args>
+void Error(const char* fmt_str, const Args&...args) {
+    std::string msg = "#     " + fmt::format(fmt_str, args...) + "\n";
+    fmt::print(fg(fmt::color::red), msg);
+    throw msg;
+}
+
+template<typename ...Args>
 void Info(const char* fmt, const Args&...args) {
     std::cout << "#     ";
     fmt::print(fmt, args...);
