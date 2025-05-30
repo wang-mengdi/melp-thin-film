@@ -63,7 +63,7 @@ namespace VTKIOFunc {
 		disk->SetRadialResolution(1);  // low res for performance
 		disk->SetCircumferentialResolution(20); // higher value for better visuals
 		vtkNew<vtkTransform> transform;
-		transform->RotateY(90);
+		transform->RotateY(-90);
 		vtkNew<vtkTransformPolyDataFilter> transformFilter;
 		transformFilter->SetInputConnection(disk->GetOutputPort());
 		transformFilter->SetTransform(transform);
