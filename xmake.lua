@@ -4,7 +4,7 @@ set_languages("c++17")
 add_requires("perlinnoise >=3.0.0")
 add_requires("libomp")
 add_requires("tinyobjloader v2.0.0rc13")
-add_requires("vtk >=9.3.1")
+add_requires("vtk =9.3.1")
 
 
 set_rundir("$(projectdir)")
